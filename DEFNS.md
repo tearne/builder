@@ -1,7 +1,7 @@
 # Definitions
 
 ## Python Orchestrated Script (POS)
-The POS style is intended for when Python code take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts. It favours subprocess calls for shell commands, while using Python control flow.
+The POS style help Python take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts, such as favouring subprocess calls for shell commands while using Python control flow.
 
 POS guidance:
 - If there is a reasonably simple command to achieve a task in the shell, prefer running that command in a subprocess over the equivalent Pythonic code. Use Python for control flow.
@@ -32,7 +32,4 @@ POS guidance:
         print("Error: run this script via './<script>' or bootstrap_inst.sh, not directly.")
         sys.exit(1)
     ```
-- Try to keep to built-in Python libraries to maximise future compatibility.
-- Suggested libraries (when relevant):
-    - `argparse`
-    - `pathlib`
+- Try to keep to built-in Python libraries to maximise future compatibility
