@@ -1,5 +1,8 @@
 # Configurable Build Script Name
 
+## Status
+Ready
+
 ## Intent
 The build script name is currently hardcoded as `build.sh`. Different repositories may use different names for their build scripts (e.g. `make.sh`, `deploy.sh`). Making this configurable allows the tool to work with a wider range of projects without requiring repos to rename their scripts.
 

@@ -1,7 +1,7 @@
 # Definitions
 
 ## Python Orchestrated Script (POS)
-The POS style help Python take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts, such as favouring subprocess calls for shell commands while using Python control flow.
+The POS style helps Python take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts, such as favouring subprocess calls for shell commands while using Python control flow.
 
 POS guidance:
 - If there is a reasonably simple command to achieve a task in the shell, prefer running that command in a subprocess over the equivalent Pythonic code. Use Python for control flow.
@@ -15,9 +15,9 @@ POS guidance:
         ```py
         subprocess.run("""DEBIAN_FRONTEND=noninteractive apt-get install -y curl""")
         ```
-    - But don't take this to an extreme and force trivial actions like loops into to the shell.
+    - But don't take this to an extreme and force trivial actions like loops into the shell.
 - Prefer a single Python source file, unless it compromises readability.
-- Make the python file executable and use a `uv` shebang
+- Make the python file executable and use a `uv` shebang.
 ```sh
 #!/usr/bin/env -S uv run --script
 # /// script
@@ -32,4 +32,15 @@ POS guidance:
         print("Error: run this script via './<script>' or bootstrap_inst.sh, not directly.")
         sys.exit(1)
     ```
-- Try to keep to built-in Python libraries to maximise future compatibility
+- Try to keep to built-in Python libraries to maximise future compatibility. Suggested libraries (when relevant):
+    - Built-in:
+        - `argparse` — CLI argument parsing
+        - `getpass` — prompting for passwords without echo
+        - `os` — environment variables, process management
+        - `pathlib` — filesystem path manipulation
+        - `shutil` — file/directory copy and removal
+        - `subprocess` — running shell commands
+        - `sys` — exit codes, interpreter info
+        - `time` — delays and simple timing
+    - External (pre-approved):
+        - `rich` — formatted terminal output, progress bars, tables

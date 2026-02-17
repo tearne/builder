@@ -1,5 +1,4 @@
-
- # Overview
+# Overview
 This project contains a single template script for building software from a git repo, as a simpler and more flexible alternative to GitHub self-hosted runners. It's well suited to cases where builds are not so frequent that they must be automated.
 
 # Usage
@@ -7,7 +6,7 @@ This project contains a single template script for building software from a git 
 Ensure `uv` is installed - it will manage the Python installation within a virtual environment.
 
 ## Configuration
-Add the following details to the relevant variables at top of the build.py script
+Add the following details to the relevant variables at top of the build.py script.
 
 - **Repository** URL (`<repo>`), a full URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (`<repo-name>`) is derived from the URL as `git clone` would (e.g. `https://github.com/org/myapp.git` → `myapp`).
 - **Branch** (`<branch>`) to be built.
