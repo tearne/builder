@@ -1,12 +1,11 @@
 # Definitions
 
 ## Python Orchestrated Script (POS)
-The POS style is intended for when Python code take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts.
+The POS style is intended for when Python code take the place of native shell scripts. It strategically breaks some Python idioms to combine the different strengths of Python and shell scripts. It favours subprocess calls for shell commands, while using Python control flow.
 
 POS guidance:
-- POS favours subprocess calls for shell commands, while using Python control flow.
-- If there is a reasonably simple command to achieve a task in the shell, prefer running that command in a subprocess over the equivalent Pythonic code.
-- This makes it easier for users to discover the command they may want to copy and paste into a terminal.
+- If there is a reasonably simple command to achieve a task in the shell, prefer running that command in a subprocess over the equivalent Pythonic code. Use Python for control flow.
+- This makes it easier for users to discover commands they may want to copy and paste into a terminal.
     - Examples:
         - To download the latest version of the `helix` `deb` for `amd64`:
         ```py

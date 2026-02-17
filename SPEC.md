@@ -1,6 +1,6 @@
 
  # Overview
-This project contains a single template script for building software from a git repo, as a simpler, safer, easier to debug, and more flexible manual alternative to GitHub self-hosted runners. It's well suited to cases where builds are not so frequent that they must be automated, and users can run it locally on their development machine.
+This project contains a single template script for building software from a git repo, as a simpler and more flexible alternative to GitHub self-hosted runners. It's well suited to cases where builds are not so frequent that they must be automated.
 
 # Usage
 ## Prerequisites
@@ -24,9 +24,9 @@ The script prints status messages to stdout as it progresses through each step.
   - If it's empty, it checks out the correct branch and continues.
   - If it's not empty, but contains the correct `<repo>` and `<branch>`, it fast-forwards to match origin.
   - Else (wrong repo, wrong branch, or cannot fast-forward) the script exits, suggesting the user reviews and clears the build directory.
-- Passes through any `git` requests for credentials to the user during `fetch`/`pull` operations, for example if a repo is not public and credentials are not automatically picked up by `git` some other way.
+- Passes through any `git` requests for credentials to the user during `fetch`/`pull` operations.
 - Ensures `<build>/target` exists, creating it if necessary.
-- Executes `<build>/<repo-name>/build.sh` from within `<build>/<repo-name>` (i.e. the working directory is the checkout), passing in a single argument the build target directory of `<build>/target`. Aside: the invoked `build.sh` within the `<repo-name>` will decide how to handle the situation when `/target` already contains past artefacts.
+- Executes `<build>/<repo-name>/build.sh` from within `<build>/<repo-name>` (i.e. the working directory is the checkout), passing in a single argument the build target directory of `<build>/target`.
 - On success, prints a completion message.
 
 
