@@ -9,9 +9,10 @@ import sys
 from pathlib import Path
 
 # --- Configuration — edit before running ---
-REPO   = "<repo>"
-BRANCH = "<branch>"
-BUILD  = "<build>"
+REPO          = "<repo>"
+BRANCH        = "<branch>"
+BUILD         = "<build>"
+BUILD_SCRIPT  = "build.sh"
 
 # uv guard — exit if run directly instead of via uv
 if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INTERPRETER")):
@@ -19,10 +20,11 @@ if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INT
     print(f"Error: run this script via './{script}', not directly.", file=sys.stderr)
     sys.exit(2)
 
-# Env-var overrides — for test injection; does not change user-facing behaviour
-REPO   = os.environ.get("BUILDER_REPO",   REPO)
-BRANCH = os.environ.get("BUILDER_BRANCH", BRANCH)
-BUILD  = os.environ.get("BUILDER_BUILD",  BUILD)
+# Env-var overrides — alternative to editing the configuration variables above
+REPO         = os.environ.get("BUILDER_REPO",    REPO)
+BRANCH       = os.environ.get("BUILDER_BRANCH",  BRANCH)
+BUILD        = os.environ.get("BUILDER_BUILD",   BUILD)
+BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",  BUILD_SCRIPT)
 
 
 def main():
@@ -48,15 +50,15 @@ def main():
 
     target.mkdir(parents=True, exist_ok=True)
 
-    build_sh = checkout / "build.sh"
+    build_sh = checkout / BUILD_SCRIPT
     if not build_sh.exists() or not os.access(build_sh, os.X_OK):
-        print(f"Error: build.sh not found or not executable in {checkout}.", file=sys.stderr)
+        print(f"Error: {BUILD_SCRIPT} not found or not executable in {checkout}.", file=sys.stderr)
         sys.exit(5)
 
-    print("Running build.sh ...")
-    result = subprocess.run(["./build.sh", str(target)], cwd=checkout)
+    print(f"Running {BUILD_SCRIPT} ...")
+    result = subprocess.run([f"./{BUILD_SCRIPT}", str(target)], cwd=checkout)
     if result.returncode != 0:
-        print(f"Error: build.sh failed with exit code {result.returncode}.", file=sys.stderr)
+        print(f"Error: {BUILD_SCRIPT} failed with exit code {result.returncode}.", file=sys.stderr)
         sys.exit(6)
 
     print("Build complete.")

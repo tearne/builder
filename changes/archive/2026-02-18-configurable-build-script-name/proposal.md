@@ -14,8 +14,10 @@ The build script name is currently hardcoded as `build.sh`. Different repositori
 
 ### ADDED
 - **Configuration**: New variable **Build script** (`<build-script>`) specifying the filename of the build script to execute within the checked-out repository. Defaults to `build.sh`.
+- **Configuration**: New environment variable `BUILDER_SCRIPT` as an alternative to editing the in-script variable. When set, it overrides the in-script value.
 
 ### MODIFIED
+- **Configuration** section: Document that all configuration variables (`<repo>`, `<branch>`, `<build>`, `<build-script>`) can be set via the corresponding `BUILDER_*` environment variables (`BUILDER_REPO`, `BUILDER_BRANCH`, `BUILDER_BUILD`, `BUILDER_SCRIPT`) as an alternative to editing the script.
 - **Behaviour** (line 29): `build.sh` → `<build-script>` in the execution step
 - **Error Handling** (exit code 5): Condition and message reference `<build-script>` instead of `build.sh`
 - **Error Handling** (exit code 6): Message references `<build-script>` instead of `build.sh`

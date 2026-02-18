@@ -225,7 +225,7 @@ def test_missing_build_sh():
     )
 
     assert rc == 5
-    assert "build.sh not found or not executable" in err
+    assert "not found or not executable" in err
 
 
 def test_non_executable_build_sh():
@@ -242,7 +242,7 @@ def test_non_executable_build_sh():
     )
 
     assert rc == 5
-    assert "build.sh not found or not executable" in err
+    assert "not found or not executable" in err
 
 
 def test_failing_build_sh():
