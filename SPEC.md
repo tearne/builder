@@ -48,7 +48,7 @@ The script exits with a non-zero code and prints a message to stderr for the fol
 - The script is idempotent — running it twice in succession on a clean checkout produces the same result (assuming `build.sh` is itself idempotent).
 
 ## Constraints
-- Use the POS standard (see `DEFNS.md`)
+- Use the POS standard (see `DEFINITIONS.md`)
 
 
 ## Verification
