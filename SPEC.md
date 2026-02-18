@@ -6,14 +6,14 @@ This project contains a single template script for building software from a git 
 Ensure `uv` is installed - it will manage the Python installation within a virtual environment.
 
 ## Configuration
-Add the following details to the relevant variables at top of the build.py script.
+Add the following details to the relevant variables at top of the builder.py script.
 
 - **Repository** URL (`<repo>`), a full URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (`<repo-name>`) is derived from the URL as `git clone` would (e.g. `https://github.com/org/myapp.git` → `myapp`).
 - **Branch** (`<branch>`) to be built.
 - **Build directory** (`<build>`) where the code will be checked out and artifacts prepared. Must already exist.
 
 ## Execution
-Run `./build.py` from any location outside the `<build>`.
+Run `./builder.py` from any location outside the `<build>`.
 
 ## Behaviour
 The script prints status messages to stdout as it progresses through each step.
@@ -42,9 +42,9 @@ The script exits with a non-zero code and prints a message to stderr for the fol
 | 6 | `build.sh` exits with a non-zero code | `Error: build.sh failed with exit code <N>.` |
 
 ## Invariants
-- `build.py` never modifies `<build>/<repo-name>` beyond git operations — it only clones, pulls, or fast-forwards; it never edits, deletes, or commits files in the checkout.
-- `build.py` never deletes `<build>/target` — it ensures the directory exists but leaves cleanup/management to `build.sh`.
-- `build.py` never stores or handles credentials — git credential prompts are passed through to the user directly.
+- `builder.py` never modifies `<build>/<repo-name>` beyond git operations — it only clones, pulls, or fast-forwards; it never edits, deletes, or commits files in the checkout.
+- `builder.py` never deletes `<build>/target` — it ensures the directory exists but leaves cleanup/management to `build.sh`.
+- `builder.py` never stores or handles credentials — git credential prompts are passed through to the user directly.
 - The script is idempotent — running it twice in succession on a clean checkout produces the same result (assuming `build.sh` is itself idempotent).
 
 ## Constraints
@@ -63,7 +63,7 @@ Each test run creates a temporary directory via `tempfile.mkdtemp(dir="target/te
 3. **Empty directory** — Create an empty `<build>/<repo-name>` directory manually, then run. Verify it clones into it and builds.
 4. **Wrong repo/branch or dirty checkout** — Modify a file in `<build>/<repo-name>` (or check out a different branch), then run. Verify exit code 3 with expected message.
 5. **Run from within build directory** — Run the script from inside `<build>`. Verify exit code 1.
-6. **Run directly with Python** — Run via `python3 build.py` instead of `./build.py`. Verify exit code 2.
+6. **Run directly with Python** — Run via `python3 builder.py` instead of `./builder.py`. Verify exit code 2.
 7. **Git failure** — Run with a non-existent local repo path. Verify exit code 4.
 8. **Missing `build.sh`** — Remove or `chmod -x` the `build.sh` in the repo. Verify exit code 5.
 9. **Failing `build.sh`** — Use a `build.sh` that exits non-zero. Verify exit code 6 with the correct code reported.

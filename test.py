@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-BUILD_PY    = Path(__file__).parent / "build.py"
+BUILD_PY    = Path(__file__).parent / "builder.py"
 TARGET_TEST = Path(__file__).parent / "target" / "test"
 
 DEFAULT_BUILD_SH = '#!/bin/sh\ntouch "$1/built"\nexit 0\n'
@@ -57,7 +57,7 @@ def make_repo(
 
 
 def run_build(cwd: Path | None = None, **env_overrides) -> tuple[int, str, str]:
-    """Run build.py as a subprocess; return (returncode, stdout, stderr)."""
+    """Run builder.py as a subprocess; return (returncode, stdout, stderr)."""
     env = os.environ.copy()
     env.update(env_overrides)
     result = subprocess.run(
@@ -171,7 +171,7 @@ def test_run_from_within_build_dir():
 
 
 def test_run_directly_with_python():
-    """Test 6: python3 build.py (bypassing uv) → exit 2."""
+    """Test 6: python3 builder.py (bypassing uv) → exit 2."""
     tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
     bare  = make_repo(tmp)
     build = tmp / "build"
@@ -303,7 +303,7 @@ def test_status_messages():
 
 @pytest.mark.skip(
     reason=(
-        "Manual verification only: run build.py against a private remote repo "
+        "Manual verification only: run builder.py against a private remote repo "
         "without cached credentials and confirm git prompts pass through to the user."
     )
 )
