@@ -2,19 +2,34 @@
 
 
 ## Change Management Process
+Project specifications are contained in `SPEC.md` files:
+- The **root** `SPEC.md` covers the project as a whole (structure, shared requirements, integration testing).
+- During spec changes, relevant assets such as proposals are stored in subfolders of the `changes` directory, which is placed alongside the relevant `SPEC.md`.
+- Directory `SPEC.md` files are scoped to components in that directory and below — they own their own usage, implementation, and test definitions.
+- Directory specs inherit project-wide non-functional requirements unless they explicitly override them.
+
+A specification will typically follow a structure such as:
+```markdown
+# Specification
+## Overview
+## Usage
+## Behaviour
+## Constraints
+## Verification
+```
+
 All changes to `SPEC.md` files must follow this process:
 
+> **Phase transitions**: Announce each move between phases clearly (e.g. "Proposal is ready for review", "Design is ready for review", "Implementation complete — ready to archive"). Do not proceed to the next phase without explicit approval.
+
 ### 1. Propose
-Create a proposal in the `changes/` directory alongside the target `SPEC.md` (e.g. `changes/<change-name>/proposal.md` for the root spec, or `resources/tok/changes/<change-name>/proposal.md` for a subfolder spec).
+Create a `proposal.md` in the `changes/<change-name>/` directory.
 
 ```markdown
-# <Change Name>
-
-## Status (optional)
-Draft | Ready
-
-### Unresolved (optional, use with Draft)
+# Proposal: <Change Name>
+## Unresolved (optional)
 - Items not yet fully specified
+- Use of this section indicates a proposal is not ready for review
 
 ## Intent
 Why this change is needed.
@@ -24,6 +39,7 @@ Why this change is needed.
 - **Out of scope**: what is deferred
 
 ## Delta
+Omit delta sections which aren't relevant.
 
 ### ADDED
 - New requirements being introduced
@@ -35,18 +51,13 @@ Why this change is needed.
 - Requirements being eliminated
 ```
 
-Omit any empty delta sections (e.g. if nothing is removed, omit REMOVED).
-
-### 2. Review
 The proposal must be reviewed and approved before proceeding.
 
-> **Phase transitions**: Announce each move between phases clearly (e.g. "Proposal is ready for review", "Design is ready for review", "Implementation complete — ready to archive"). Do not proceed to the next phase without explicit approval.
-
-### 3. Design
+### 2. Design
 Create a `design.md` in the same change folder as the proposal. This captures the technical approach and an ordered task list. The design should explain *how* the approved spec changes will be realised in the codebase — this is where implementation-specific detail belongs (not in the proposal or spec).
 
 ```markdown
-# <Change Name> — Design
+# Design: <Change Name>
 
 ## Approach
 Technical explanation of how the change will be implemented,
@@ -62,11 +73,11 @@ Where the task list includes tests, they should be listed as separate tasks and,
 
 The design must be reviewed and approved before implementation begins.
 
-### 4. Implement
+### 3. Implement
 Work through the task list one item at a time. Pause after each task and invite the operator to review before proceeding to the next. Do not modify `SPEC.md` during this phase.
 
-### 5. Archive
-Apply the proposal delta to the co-located `SPEC.md`. Move the change folder to the co-located `changes/archive/YYYY-MM-DD-<change-name>/`.
+### 4. Archive
+Apply the proposal delta to the `SPEC.md` alongside the `changes/` directory. Move the change folder to `changes/archive/YYYY-MM-DD-<change-name>/`.
 
 
 
@@ -94,12 +105,12 @@ POS guidance:
 # requires-python = "==3.12.*"
 # ///
 ```
-- Rather than complex configuration, set the script up with key functions at the top of the file, so they can be easily commented out or used to jump to navigate.
+- Rather than complex configuration, set the script up with key functions at the top of the file, so they can be easily commented out or jumped to.
 - Keep utility functions towards the bottom of the file.
 - Guard against being run directly (e.g. `python3 script.py`) instead of via `uv run`. Check for `VIRTUAL_ENV` or `UV_INTERNAL__PARENT_INTERPRETER` in the environment and exit with a helpful message if neither is set. Use the pattern:
     ```py
     if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INTERPRETER")):
-        print("Error: run this script via './<script>' or bootstrap_inst.sh, not directly.")
+        print("Error: run this script via './<script-name>', not directly.")
         sys.exit(1)
     ```
 - Try to keep to built-in Python libraries to maximise future compatibility. Suggested libraries (when relevant):
