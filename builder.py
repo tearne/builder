@@ -11,7 +11,7 @@ from pathlib import Path
 # --- Configuration — edit before running ---
 REPO          = "<repo>"
 BRANCH        = "<branch>"
-BUILD         = "<build>"
+BUILD_DIR     = "<build>"
 BUILD_SCRIPT  = "build.sh"
 
 # uv guard — exit if run directly instead of via uv
@@ -23,17 +23,17 @@ if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INT
 # Env-var overrides — alternative to editing the configuration variables above
 REPO         = os.environ.get("BUILDER_REPO",    REPO)
 BRANCH       = os.environ.get("BUILDER_BRANCH",  BRANCH)
-BUILD        = os.environ.get("BUILDER_BUILD",   BUILD)
+BUILD_DIR    = os.environ.get("BUILDER_BUILD",   BUILD_DIR)
 BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",  BUILD_SCRIPT)
 
 
 def main():
     cwd      = Path.cwd()
-    build    = Path(os.path.abspath(BUILD))
-    checkout = build / repo_name(REPO)
-    target   = build / "target"
+    build_dir = Path(os.path.abspath(BUILD_DIR))
+    checkout  = build_dir / repo_name(REPO)
+    target    = build_dir / "target"
 
-    if cwd.is_relative_to(build):
+    if cwd.is_relative_to(build_dir):
         print("Error: do not run this script from within the build directory.", file=sys.stderr)
         sys.exit(1)
 

@@ -1,5 +1,8 @@
 # Rename BUILD to BUILD_DIR
 
+## Status
+Approved
+
 ## Intent
 The configuration variable `BUILD` is easily confused with the concept of "running a build". Renaming it to `BUILD_DIR` makes its purpose — a directory path — immediately clear, especially now that `BUILD_SCRIPT` sits alongside it.
 

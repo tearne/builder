@@ -8,3 +8,4 @@
 
 # Definitions
 @DEFINITIONS.md
+@POS.md
