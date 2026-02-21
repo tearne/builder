@@ -6,7 +6,10 @@
 import os
 import subprocess
 import sys
+from functools import partial
 from pathlib import Path
+
+print = partial(print, flush=True)
 
 # --- Configuration — edit before running ---
 REPO          = "<repo>"
