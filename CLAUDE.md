@@ -6,6 +6,3 @@
 ## Tests
 - The root `test.py` is the pytest suite for `builder.py`. Run it with `uv run --with pytest pytest test.py -v`.
 
-# Definitions
-@DEFINITIONS.md
-@POS.md
