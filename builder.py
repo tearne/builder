@@ -23,7 +23,7 @@ if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INT
 # Env-var overrides — alternative to editing the configuration variables above
 REPO         = os.environ.get("BUILDER_REPO",    REPO)
 BRANCH       = os.environ.get("BUILDER_BRANCH",  BRANCH)
-BUILD_DIR    = os.environ.get("BUILDER_BUILD",   BUILD_DIR)
+BUILD_DIR    = os.environ.get("BUILDER_BUILD_DIR", BUILD_DIR)
 BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",  BUILD_SCRIPT)
 
 

@@ -84,7 +84,7 @@ def test_fresh_clone():
     rc, out, err = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 0
@@ -99,7 +99,7 @@ def test_rerun_on_clean_checkout():
     build = tmp / "build"
     build.mkdir()
 
-    kwargs = dict(BUILDER_REPO=str(bare), BUILDER_BRANCH="main", BUILDER_BUILD=str(build))
+    kwargs = dict(BUILDER_REPO=str(bare), BUILDER_BRANCH="main", BUILDER_BUILD_DIR=str(build))
     rc1, _, _ = run_build(**kwargs)
     rc2, _, _ = run_build(**kwargs)
 
@@ -118,7 +118,7 @@ def test_empty_checkout_dir():
     rc, _, _ = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 0
@@ -134,7 +134,7 @@ def test_wrong_branch():
     rc, _, _ = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
     assert rc == 0
 
@@ -145,7 +145,7 @@ def test_wrong_branch():
     rc, _, err = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 3
@@ -163,7 +163,7 @@ def test_run_from_within_build_dir():
         cwd=build,
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 1
@@ -180,7 +180,7 @@ def test_run_directly_with_python():
     env = os.environ.copy()
     env["BUILDER_REPO"]   = str(bare)
     env["BUILDER_BRANCH"] = "main"
-    env["BUILDER_BUILD"]  = str(build)
+    env["BUILDER_BUILD_DIR"]  = str(build)
     env.pop("VIRTUAL_ENV", None)
     env.pop("UV_INTERNAL__PARENT_INTERPRETER", None)
 
@@ -204,7 +204,7 @@ def test_git_failure():
     rc, _, err = run_build(
         BUILDER_REPO="/nonexistent/path/repo.git",
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 4
@@ -221,7 +221,7 @@ def test_missing_build_sh():
     rc, _, err = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 5
@@ -238,7 +238,7 @@ def test_non_executable_build_sh():
     rc, _, err = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 5
@@ -255,7 +255,7 @@ def test_failing_build_sh():
     rc, _, err = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 6
@@ -275,7 +275,7 @@ def test_target_directory_creation():
     rc, _, _ = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 0
@@ -292,7 +292,7 @@ def test_status_messages():
     rc, out, _ = run_build(
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
-        BUILDER_BUILD=str(build),
+        BUILDER_BUILD_DIR=str(build),
     )
 
     assert rc == 0

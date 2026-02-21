@@ -10,7 +10,7 @@ Add the following details to the relevant variables at top of the builder.py scr
 
 - **Repository** URL (`<repo>`, env: `BUILDER_REPO`), a full URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (`<repo-name>`) is derived from the URL as `git clone` would (e.g. `https://github.com/org/myapp.git` → `myapp`).
 - **Branch** (`<branch>`, env: `BUILDER_BRANCH`) to be built.
-- **Build directory** (`<build>`, env: `BUILDER_BUILD`) where the code will be checked out and artifacts prepared. Must already exist.
+- **Build directory** (`<build>`, env: `BUILDER_BUILD_DIR`) where the code will be checked out and artifacts prepared. Must already exist.
 - **Build script** (`<build-script>`, env: `BUILDER_SCRIPT`) filename of the script to execute within the checked-out repository. Defaults to `build.sh`.
 
 ## Execution
