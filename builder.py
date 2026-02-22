@@ -11,11 +11,11 @@ from pathlib import Path
 
 print = partial(print, flush=True)
 
-# --- Configuration — edit before running ---
-REPO          = "<repo>"
-BRANCH        = "<branch>"
-BUILD_DIR     = "<build>"
-BUILD_SCRIPT  = "build.sh"
+# --- Configuration — hard-code values here, or set via the BUILDER_* env vars ---
+REPO         = os.environ.get("BUILDER_REPO",      "<repo>")
+BRANCH       = os.environ.get("BUILDER_BRANCH",    "<branch>")
+BUILD_DIR    = os.environ.get("BUILDER_BUILD_DIR", "<build>")
+BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",    "build.sh")
 
 # uv guard — exit if run directly instead of via uv
 if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INTERPRETER")):
@@ -23,20 +23,13 @@ if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INT
     print(f"Error: run this script via './{script}', not directly.", file=sys.stderr)
     sys.exit(2)
 
-# Env-var overrides — alternative to editing the configuration variables above
-REPO         = os.environ.get("BUILDER_REPO",    REPO)
-BRANCH       = os.environ.get("BUILDER_BRANCH",  BRANCH)
-BUILD_DIR    = os.environ.get("BUILDER_BUILD_DIR", BUILD_DIR)
-BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",  BUILD_SCRIPT)
-
 
 def main():
-    cwd      = Path.cwd()
+    cwd       = Path.cwd()
     build_dir = Path(os.path.abspath(BUILD_DIR))
-    checkout  = build_dir / repo_name(REPO)
-    target    = build_dir / "target"
+    checkout  = build_dir / "checkouts" / repo_name(REPO)
 
-    if cwd.is_relative_to(build_dir):
+    if cwd.is_relative_to(build_dir / "checkouts"):
         print("Error: do not run this script from within the build directory.", file=sys.stderr)
         sys.exit(1)
 
@@ -51,15 +44,13 @@ def main():
         print(f"Updating {checkout} ...")
         _verify_and_ff(checkout)
 
-    target.mkdir(parents=True, exist_ok=True)
-
     build_sh = checkout / BUILD_SCRIPT
     if not build_sh.exists() or not os.access(build_sh, os.X_OK):
         print(f"Error: {BUILD_SCRIPT} not found or not executable in {checkout}.", file=sys.stderr)
         sys.exit(5)
 
     print(f"Running {BUILD_SCRIPT} ...")
-    result = subprocess.run([f"./{BUILD_SCRIPT}", str(target)], cwd=checkout)
+    result = subprocess.run([f"./{BUILD_SCRIPT}", str(build_dir)], cwd=checkout)
     if result.returncode != 0:
         print(f"Error: {BUILD_SCRIPT} failed with exit code {result.returncode}.", file=sys.stderr)
         sys.exit(6)

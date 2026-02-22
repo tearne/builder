@@ -4,11 +4,10 @@ A single-file Python script that clones (or updates) a git repo and runs its bui
 
 ## How It Works
 
-1. Clones `REPO` at `BRANCH` into `BUILD_DIR/<repo-name>/`, or fast-forwards an existing checkout.
-2. Ensures `BUILD_DIR/target/` exists.
-3. Runs `BUILD_DIR/<repo-name>/BUILD_SCRIPT` with `BUILD_DIR/target/` as its only argument.
+1. Clones `REPO` at `BRANCH` into `BUILD_DIR/checkouts/<repo-name>/`, or fast-forwards an existing checkout.
+2. Runs `BUILD_DIR/checkouts/<repo-name>/BUILD_SCRIPT` with `BUILD_DIR` as its only argument.
 
-The build script is responsible for placing any artifacts into the target directory it receives.
+The build script receives `BUILD_DIR` as its only argument and is responsible for placing artifacts there.
 
 ## Setup
 
@@ -18,7 +17,7 @@ Requires [`uv`](https://docs.astral.sh/uv/). Set the four configuration variable
 |----------|-------------|-------------|
 | `REPO` | `BUILDER_REPO` | Full git URL of the repo to build |
 | `BRANCH` | `BUILDER_BRANCH` | Branch to check out |
-| `BUILD_DIR` | `BUILDER_BUILD_DIR` | Directory for checkouts and artifacts (must exist) |
+| `BUILD_DIR` | `BUILDER_BUILD_DIR` | Directory where artifacts are placed; checkouts go in `BUILD_DIR/checkouts/` (must exist) |
 | `BUILD_SCRIPT` | `BUILDER_SCRIPT` | Build script filename inside the repo (default: `build.sh`) |
 
 Then run:
@@ -35,4 +34,4 @@ Then run:
 ./run_example.sh
 ```
 
-After it runs, `target/builder/` will contain the cloned repo and `target/target/hello-world.tar` will hold the exported image.
+After it runs, `target/checkouts/builder/` will contain the cloned repo and `target/hello-world.tar` will hold the exported image.

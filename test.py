@@ -88,8 +88,8 @@ def test_fresh_clone():
     )
 
     assert rc == 0
-    assert (build / "myrepo").exists()
-    assert (build / "target" / "built").exists()
+    assert (build / "checkouts" / "myrepo").exists()
+    assert (build / "built").exists()
 
 
 def test_rerun_on_clean_checkout():
@@ -113,7 +113,7 @@ def test_empty_checkout_dir():
     bare  = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
-    (build / "myrepo").mkdir()  # empty directory
+    (build / "checkouts" / "myrepo").mkdir(parents=True)  # empty directory
 
     rc, _, _ = run_build(
         BUILDER_REPO=str(bare),
@@ -139,7 +139,7 @@ def test_wrong_branch():
     assert rc == 0
 
     # Switch checkout to a different local branch
-    checkout = build / "myrepo"
+    checkout = build / "checkouts" / "myrepo"
     subprocess.run(["git", "checkout", "-b", "other"], cwd=checkout, check=True, capture_output=True)
 
     rc, _, err = run_build(
@@ -153,14 +153,16 @@ def test_wrong_branch():
 
 
 def test_run_from_within_build_dir():
-    """Test 5: cwd inside build dir → exit 1."""
+    """Test 5: cwd inside checkouts dir → exit 1."""
     tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
     bare  = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
+    checkouts = build / "checkouts"
+    checkouts.mkdir()
 
     rc, _, err = run_build(
-        cwd=build,
+        cwd=checkouts,
         BUILDER_REPO=str(bare),
         BUILDER_BRANCH="main",
         BUILDER_BUILD_DIR=str(build),
@@ -262,15 +264,14 @@ def test_failing_build_sh():
     assert "42" in err
 
 
-def test_target_directory_creation():
-    """Test 10: target dir absent before run → created by script, exit 0."""
+def test_checkouts_directory_creation():
+    """Test 10: checkouts dir absent before run → created by script, exit 0."""
     tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
     bare  = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
-    target = build / "target"
 
-    assert not target.exists()
+    assert not (build / "checkouts").exists()
 
     rc, _, _ = run_build(
         BUILDER_REPO=str(bare),
@@ -279,7 +280,7 @@ def test_target_directory_creation():
     )
 
     assert rc == 0
-    assert target.is_dir()
+    assert (build / "checkouts").is_dir()
 
 
 def test_status_messages():
