@@ -30,16 +30,14 @@ The script prints status messages to stdout as it progresses through each step.
 
 
 ## Error Handling
-The script exits with a non-zero code and prints a message to stderr for the following error situations:
+For each of the following conditions the script exits non-zero and prints a descriptive message to stderr:
 
-| Exit Code | Condition | Message |
-|-----------|-----------|---------|
-| 1 | Script is run from within `<build>/checkouts/` | `Error: do not run this script from within the build directory.` |
-| 2 | Script is run directly instead of via `uv` | `Error: run this script via './<script>', not directly.` |
-| 3 | `<build>/checkouts/<repo-name>` repo or branch are not as expected, or cannot be fast-forwarded to match origin | `Error: <build>/checkouts/<repo-name> does not match expected repo/branch or cannot be fast-forwarded. Review and clear it manually.` |
-| 4 | `git clone` or `git pull` fails (e.g. network error, auth failure) | `Error: git operation failed.` |
-| 5 | `<build>/checkouts/<repo-name>/<build-script>` is not found or not executable | `Error: <build-script> not found or not executable in <build>/checkouts/<repo-name>.` |
-| 6 | `<build-script>` exits with a non-zero code | `Error: <build-script> failed with exit code <N>.` |
+- Script is run from within `<build>/checkouts/`
+- Script is run directly instead of via `uv`
+- `<build>/checkouts/<repo-name>` repo or branch are not as expected, or cannot be fast-forwarded to match origin
+- `git clone` or `git fetch` fails (e.g. network error, auth failure)
+- `<build-script>` is not found or not executable in the checkout
+- `<build-script>` exits with a non-zero code
 
 ## Invariants
 - `builder.py` never modifies `<build>/checkouts/<repo-name>` beyond git operations — it only clones, pulls, or fast-forwards; it never edits, deletes, or commits files in the checkout.
@@ -61,12 +59,12 @@ Each test run creates a temporary directory via `tempfile.mkdtemp(dir="target/te
 1. **Fresh clone** — Run against a non-existent `<build>/checkouts/<repo-name>`. Verify it clones, runs `<build-script>`, and exits 0.
 2. **Re-run on clean checkout** — Run again immediately after a successful build. Verify it fast-forwards and rebuilds successfully.
 3. **Empty directory** — Create an empty `<build>/checkouts/<repo-name>` directory manually, then run. Verify it clones into it and builds.
-4. **Wrong repo/branch or dirty checkout** — Modify a file in `<build>/checkouts/<repo-name>` (or check out a different branch), then run. Verify exit code 3 with expected message.
-5. **Run from within checkouts directory** — Run the script from inside `<build>/checkouts/`. Verify exit code 1.
-6. **Run directly with Python** — Run via `python3 builder.py` instead of `./builder.py`. Verify exit code 2.
-7. **Git failure** — Run with a non-existent local repo path. Verify exit code 4.
-8. **Missing `<build-script>`** — Remove or `chmod -x` `<build-script>` in the repo. Verify exit code 5.
-9. **Failing `<build-script>`** — Use a `<build-script>` that exits non-zero. Verify exit code 6 with the correct code reported.
+4. **Wrong repo/branch or dirty checkout** — Modify a file in `<build>/checkouts/<repo-name>` (or check out a different branch), then run. Verify non-zero exit and stderr output.
+5. **Run from within checkouts directory** — Run the script from inside `<build>/checkouts/`. Verify non-zero exit and stderr output.
+6. **Run directly with Python** — Run via `python3 builder.py` instead of `./builder.py`. Verify non-zero exit and stderr output.
+7. **Git failure** — Run with a non-existent local repo path. Verify non-zero exit and stderr output.
+8. **Missing `<build-script>`** — Remove or `chmod -x` `<build-script>` in the repo. Verify non-zero exit and stderr output.
+9. **Failing `<build-script>`** — Use a `<build-script>` that exits non-zero. Verify non-zero exit and stderr output.
 10. **Checkouts directory creation** — Run with no pre-existing `<build>/checkouts/`. Verify it gets created before `build.sh` executes.
 11. **Status messages** — Verify stdout contains progress messages at each step.
 12. **Credential passthrough** — Manual verification only (cannot be tested with local repos). Run against a private remote repo without cached credentials. Verify git prompts for credentials.

@@ -11,18 +11,11 @@ from pathlib import Path
 
 print = partial(print, flush=True)
 
-# --- Configuration — hard-code values here, or set via the BUILDER_* env vars ---
+# --- Configuration — Set BUILDER_* env vars or <hard code>---
 REPO         = os.environ.get("BUILDER_REPO",      "<repo>")
 BRANCH       = os.environ.get("BUILDER_BRANCH",    "<branch>")
 BUILD_DIR    = os.environ.get("BUILDER_BUILD_DIR", "<build>")
-BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",    "build.sh")
-
-# uv guard — exit if run directly instead of via uv
-if not (os.environ.get("VIRTUAL_ENV") or os.environ.get("UV_INTERNAL__PARENT_INTERPRETER")):
-    script = Path(sys.argv[0]).name
-    print(f"Error: run this script via './{script}', not directly.", file=sys.stderr)
-    sys.exit(2)
-
+BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT",    "<build-script>")
 
 def main():
     cwd       = Path.cwd()
@@ -89,4 +82,7 @@ def repo_name(url: str) -> str:
 
 
 if __name__ == "__main__":
+    if not os.environ.get("VIRTUAL_ENV"):
+        print("Error: no virtual environment detected. Run this script via './<script-name>' (requires uv), or activate a virtual environment first.", file=sys.stderr)
+        sys.exit(100)
     main()
