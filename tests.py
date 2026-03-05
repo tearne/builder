@@ -107,7 +107,7 @@ def test_fresh_clone():
 
 
 def test_rerun_on_clean_checkout():
-    """Test 2: run twice on a clean checkout; both exit 0."""
+    """Test 2: run twice on a clean checkout with upstream changes; verify fast-forward."""
     tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
     bare = make_repo(tmp)
     build = tmp / "build"
@@ -119,11 +119,19 @@ def test_rerun_on_clean_checkout():
         BUILDER_BUILD_DIR=str(build),
         BUILDER_SCRIPT=DEFAULT_SCRIPT,
     )
-    rc1, _, _ = run_build(**kwargs)
-    rc2, _, _ = run_build(**kwargs)
 
+    rc1, out1, _ = run_build(**kwargs)
     assert rc1 == 0
+    assert "Cloning" in out1
+
+    work = tmp / "work"
+    _git(work, "commit", "--allow-empty", "-m", "new commit")
+    _git(work, "remote", "add", "origin", str(bare))
+    _git(work, "push", "origin", "main")
+
+    rc2, out2, _ = run_build(**kwargs)
     assert rc2 == 0
+    assert "Updating" in out2
 
 
 def test_empty_checkout_dir():
@@ -142,6 +150,25 @@ def test_empty_checkout_dir():
     )
 
     assert rc == 0
+
+
+def test_build_dir_unexpected_files():
+    """Test 3b: build dir contains unexpected files → exit non-zero."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    build = tmp / "build"
+    build.mkdir()
+    (build / "unexpected.txt").write_text("oops\n")
+
+    rc, _, err = run_build(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+
+    assert rc != 0
+    assert err
 
 
 def test_wrong_branch():
@@ -222,6 +249,23 @@ def test_run_directly_with_python():
 
     assert result.returncode != 0
     assert result.stderr
+
+
+def test_missing_env_vars():
+    """Test 6b: missing required env vars → exit non-zero with error."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    build = tmp / "build"
+    build.mkdir()
+
+    rc, _, err = run_build(
+        BUILDER_REPO="",
+        BUILDER_BRANCH="",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT="",
+    )
+
+    assert rc != 0
+    assert err
 
 
 def test_git_failure():

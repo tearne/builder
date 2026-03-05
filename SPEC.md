@@ -6,55 +6,58 @@ This project contains a single template script for building software from a git 
 Ensure `uv` is installed - it will manage the Python installation within a virtual environment.
 
 ## Configuration
-Add the following details to the relevant variables at top of the builder.py script. Each variable can also be set via its corresponding `BUILDER_*` environment variable as an alternative to editing the script.
+Set the required configuration via environment variables:
 
-- **Repository** URL (`<repo>`, env: `BUILDER_REPO`), a full URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (`<repo-name>`) is derived from the URL as `git clone` would (e.g. `https://github.com/org/myapp.git` → `myapp`).
-- **Branch** (`<branch>`, env: `BUILDER_BRANCH`) to be built.
-- **Build directory** (`<build>`, env: `BUILDER_BUILD_DIR`) must already exist; artifacts are placed here and checkouts go in `<build>/checkouts/`.
-- **Build script** (`<build-script>`, env: `BUILDER_SCRIPT`) filename of the script to execute within the checked-out repository. Defaults to `build.sh`.
+- **BUILDER_REPO** — repository URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (repo name derived from the URL) follows `git clone` conventions (e.g. `https://github.com/org/myapp.git` → `myapp`).
+- **BUILDER_BRANCH** — branch to be built.
+- **BUILDER_BUILD_DIR** — build directory; artifacts are placed here and checkouts go in the `checkouts/` subdirectory. The directory is created if needed.
+- **BUILDER_SCRIPT** — filename of the script to execute within the checked-out repository.
 
 ## Execution
-Run `./builder.py` from any location outside `<build>/checkouts/`.
+Run `./builder.py` from any location outside the build directory `checkouts/` subdirectory.
 
 ## Behaviour
 The script prints status messages to stdout as it progresses through each step.
 
-- Checks the status of the directory `<build>/checkouts/<repo-name>`:
+- Checks the status of the checkout directory under `checkouts/` for the repo:
   - If it doesn't exist, it creates it, checks out the correct branch and continues.
   - If it's empty, it checks out the correct branch and continues.
-  - If it's not empty, but contains the correct `<repo>` and `<branch>`, it fast-forwards to match origin.
+  - If it's not empty, but contains the correct repo and branch, it fast-forwards to match origin.
   - Else (wrong repo, wrong branch, or cannot fast-forward) the script exits, suggesting the user reviews and clears the build directory.
 - Passes through any `git` requests for credentials to the user during `fetch`/`pull` operations.
-- Executes `<build>/checkouts/<repo-name>/<build-script>` from within `<build>/checkouts/<repo-name>` (i.e. the working directory is the checkout), passing `<build>` as the only argument.
+- Executes the build script from within the checkout directory (i.e. the working directory is the checkout), passing the build directory as the only argument.
 - On success, prints a completion message.
 
 
 ## Error Handling
 For each of the following conditions the script exits non-zero and prints a descriptive message to stderr:
 
-- Script is run from within `<build>/checkouts/`
+- Script is run from within the build directory `checkouts/` subdirectory
 - Script is run directly instead of via `uv`
-- `<build>/checkouts/<repo-name>` repo or branch are not as expected, or cannot be fast-forwarded to match origin
+- Required configuration env vars are missing
+- Build directory is not empty and has no `checkouts/` subdirectory
+- Checkout repo or branch are not as expected, or cannot be fast-forwarded to match origin
 - `git clone` or `git fetch` fails (e.g. network error, auth failure)
-- `<build-script>` is not found or not executable in the checkout
-- `<build-script>` exits with a non-zero code
+- Build script is not found or not executable in the checkout
+- Build script exits with a non-zero code
 
 ## Invariants
-- `builder.py` never modifies `<build>/checkouts/<repo-name>` beyond git operations — it only clones, pulls, or fast-forwards; it never edits, deletes, or commits files in the checkout.
-- `builder.py` never modifies or deletes anything in `<build>` directly — artifact placement is left entirely to `<build-script>`.
+- `builder.py` never modifies the checkout directory beyond git operations — it only clones, pulls, or fast-forwards; it never edits, deletes, or commits files in the checkout.
+- `builder.py` never modifies or deletes anything in the build directory directly — artifact placement is left entirely to the build script.
 - `builder.py` never stores or handles credentials — git credential prompts are passed through to the user directly.
-- The script is idempotent — running it twice in succession on a clean checkout produces the same result (assuming `<build-script>` is itself idempotent).
+- The script is idempotent — running it twice in succession on a clean checkout produces the same result (assuming the build script is itself idempotent).
 
 ## Constraints
 - Use the POS standard
+- Tests use `target/test` as the base directory and expect the following structure:
+  - `repos/` — contains bare git repos to clone from
+  - `build/` — used as the build directory
 
 
 ## Verification
 Tests use temporary local git repositories created on the filesystem. Since `git` accepts local paths as URLs, these repos can be used in place of remote URLs, avoiding any network dependency.
 
-Each test run creates a temporary directory via `tempfile.mkdtemp(dir="target/test")`, giving each run an isolated workspace within a predictable location. The `target/` directory is gitignored. Within each temp directory:
-- `repos/` — contains bare git repos to clone from
-- `build/` — used as the `<build>` directory
+Each test run creates a temporary directory via `tempfile.mkdtemp(dir="target/test")`, giving each run an isolated workspace within a predictable location. The `target/` directory is gitignored.
 
 1. **Fresh clone** — Run against a non-existent `<build>/checkouts/<repo-name>`. Verify it clones, runs `<build-script>`, and exits 0.
 2. **Re-run on clean checkout** — Run again immediately after a successful build. Verify it fast-forwards and rebuilds successfully.
