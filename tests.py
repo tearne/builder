@@ -1,16 +1,22 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = "==3.12.*"
+# dependencies = ["pytest"]
+# ///
+
 import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-import pytest
+import pytest  # type: ignore[attr-defined]
 
-BUILD_PY    = Path(__file__).parent / "builder.py"
+BUILD_PY = Path(__file__).parent / "builder.py"
 TARGET_TEST = Path(__file__).parent / "target" / "test"
 
 DEFAULT_BUILD_SH = '#!/bin/sh\ntouch "$1/built"\nexit 0\n'
-DEFAULT_SCRIPT   = "build.sh"
+DEFAULT_SCRIPT = "build.sh"
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -21,6 +27,7 @@ def ensure_target_test_dir():
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _git(cwd: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
@@ -52,12 +59,16 @@ def make_repo(
 
     _git(work, "add", ".")
     _git(work, "commit", "-m", "init")
-    subprocess.run(["git", "clone", "--bare", str(work), str(bare)], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "clone", "--bare", str(work), str(bare)],
+        check=True,
+        capture_output=True,
+    )
 
     return bare
 
 
-def run_build(cwd: Path | None = None, **env_overrides) -> tuple[int, str, str]:
+def run_build(cwd: str | Path | None = None, **env_overrides) -> tuple[int, str, str]:
     """Run builder.py as a subprocess; return (returncode, stdout, stderr)."""
     env = os.environ.copy()
     env.update(env_overrides)
@@ -75,10 +86,11 @@ def run_build(cwd: Path | None = None, **env_overrides) -> tuple[int, str, str]:
 # Tests
 # ---------------------------------------------------------------------------
 
+
 def test_fresh_clone():
     """Test 1: non-existent checkout → clone, build, exit 0."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
@@ -96,12 +108,17 @@ def test_fresh_clone():
 
 def test_rerun_on_clean_checkout():
     """Test 2: run twice on a clean checkout; both exit 0."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
-    kwargs = dict(BUILDER_REPO=str(bare), BUILDER_BRANCH="main", BUILDER_BUILD_DIR=str(build), BUILDER_SCRIPT=DEFAULT_SCRIPT)
+    kwargs = dict(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
     rc1, _, _ = run_build(**kwargs)
     rc2, _, _ = run_build(**kwargs)
 
@@ -111,8 +128,8 @@ def test_rerun_on_clean_checkout():
 
 def test_empty_checkout_dir():
     """Test 3: pre-created empty checkout dir → clone into it and build."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
     (build / "checkouts" / "myrepo").mkdir(parents=True)  # empty directory
@@ -129,8 +146,8 @@ def test_empty_checkout_dir():
 
 def test_wrong_branch():
     """Test 4: checkout on wrong branch → exit 3."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
@@ -144,7 +161,12 @@ def test_wrong_branch():
 
     # Switch checkout to a different local branch
     checkout = build / "checkouts" / "myrepo"
-    subprocess.run(["git", "checkout", "-b", "other"], cwd=checkout, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "checkout", "-b", "other"],
+        cwd=checkout,
+        check=True,
+        capture_output=True,
+    )
 
     rc, _, err = run_build(
         BUILDER_REPO=str(bare),
@@ -159,8 +181,8 @@ def test_wrong_branch():
 
 def test_run_from_within_build_dir():
     """Test 5: cwd inside checkouts dir → exit 1."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
     checkouts = build / "checkouts"
@@ -180,15 +202,15 @@ def test_run_from_within_build_dir():
 
 def test_run_directly_with_python():
     """Test 6: python3 builder.py (bypassing uv) → exit 2."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
     env = os.environ.copy()
-    env["BUILDER_REPO"]   = str(bare)
+    env["BUILDER_REPO"] = str(bare)
     env["BUILDER_BRANCH"] = "main"
-    env["BUILDER_BUILD_DIR"]  = str(build)
+    env["BUILDER_BUILD_DIR"] = str(build)
     env.pop("VIRTUAL_ENV", None)
 
     result = subprocess.run(
@@ -204,7 +226,7 @@ def test_run_directly_with_python():
 
 def test_git_failure():
     """Test 7: non-existent repo path → git clone fails → exit 4."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
     build = tmp / "build"
     build.mkdir()
 
@@ -221,8 +243,8 @@ def test_git_failure():
 
 def test_missing_build_sh():
     """Test 8a: no build.sh in repo → exit 5."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp, build_sh=None)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp, build_sh=None)
     build = tmp / "build"
     build.mkdir()
 
@@ -239,8 +261,8 @@ def test_missing_build_sh():
 
 def test_non_executable_build_sh():
     """Test 8b: build.sh present but not executable → exit 5."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp, build_sh_executable=False)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp, build_sh_executable=False)
     build = tmp / "build"
     build.mkdir()
 
@@ -257,8 +279,8 @@ def test_non_executable_build_sh():
 
 def test_failing_build_sh():
     """Test 9: build.sh exits 42 → exit 6 with code in message."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp, build_sh="#!/bin/sh\nexit 42\n")
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp, build_sh="#!/bin/sh\nexit 42\n")
     build = tmp / "build"
     build.mkdir()
 
@@ -275,8 +297,8 @@ def test_failing_build_sh():
 
 def test_checkouts_directory_creation():
     """Test 10: checkouts dir absent before run → created by script, exit 0."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
@@ -295,8 +317,8 @@ def test_checkouts_directory_creation():
 
 def test_status_messages():
     """Test 11: stdout contains progress messages during a fresh clone."""
-    tmp   = Path(tempfile.mkdtemp(dir=TARGET_TEST))
-    bare  = make_repo(tmp)
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
     build = tmp / "build"
     build.mkdir()
 
@@ -322,3 +344,8 @@ def test_status_messages():
 def test_credential_passthrough():
     """Test 12: git credential prompts are passed through (manual only)."""
     pass
+
+
+if __name__ == "__main__":
+    if "pytest" not in sys.modules or "pytest.pytest_source" not in dir():
+        sys.exit(pytest.main([__file__, "-v"]))
