@@ -13,6 +13,7 @@ Fix inconsistencies between spec and implementation.
 - **Build directory safety** (Error Handling): Add check that build dir only contains expected checkouts subdirectory; fail if other files present.
 - **Configuration section** (Usage lines 11-14): Remove `<placeholder>` notation, simplify to just env var names with descriptions.
 - **builder.py defaults** (lines 14-18): Remove `<placeholder>` notation from code. Update defaults to be sensible (empty string or actual defaults like "build.sh").
+ - **Dirty checkout** (Error Handling): If checkout has uncommitted changes, exit with a clear error before fast-forward.
 
 ### ADDED
 - **Test workspace** (Constraints section): Add note about `target/test` temp dir structure for tests.

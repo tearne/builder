@@ -206,6 +206,30 @@ def test_wrong_branch():
     assert err
 
 
+def test_dirty_checkout():
+    """Test 4b: dirty checkout → exit non-zero with error."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    build = tmp / "build"
+    build.mkdir()
+
+    kwargs = dict(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+    rc1, _, _ = run_build(**kwargs)
+    assert rc1 == 0
+
+    checkout = build / "checkouts" / "myrepo"
+    (checkout / "dirty.txt").write_text("dirty\n")
+
+    rc2, _, err = run_build(**kwargs)
+    assert rc2 != 0
+    assert err
+
+
 def test_run_from_within_build_dir():
     """Test 5: cwd inside checkouts dir → exit 1."""
     tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))

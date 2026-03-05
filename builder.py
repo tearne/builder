@@ -109,10 +109,23 @@ def _verify_and_ff(checkout: Path) -> None:
         capture_output=True,
         text=True,
     )
+    r_status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=checkout,
+        capture_output=True,
+        text=True,
+    )
 
     if r_url.stdout.strip() != REPO or r_branch.stdout.strip() != BRANCH:
         print(
             f"Error: {checkout} does not match expected repo/branch or cannot be fast-forwarded. Review and clear it manually.",
+            file=sys.stderr,
+        )
+        sys.exit(3)
+
+    if r_status.stdout.strip():
+        print(
+            f"Error: {checkout} has uncommitted changes. Review and clear it manually.",
             file=sys.stderr,
         )
         sys.exit(3)

@@ -36,6 +36,7 @@ For each of the following conditions the script exits non-zero and prints a desc
 - Script is run directly instead of via `uv`
 - Required configuration env vars are missing
 - Build directory is not empty and has no `checkouts/` subdirectory
+- Checkout has uncommitted changes
 - Checkout repo or branch are not as expected, or cannot be fast-forwarded to match origin
 - `git clone` or `git fetch` fails (e.g. network error, auth failure)
 - Build script is not found or not executable in the checkout
