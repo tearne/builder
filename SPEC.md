@@ -20,7 +20,7 @@ The configuration section also includes a `BUILD_SCRIPT_VARS` dictionary for any
 Values set in the configuration section take precedence over any same-named environment variables already present in the shell. Leaving a value empty falls back to the corresponding shell environment variable.
 
 ## Execution
-Run `./builder.py` from any location outside the build directory `checkouts/` subdirectory.
+Run `./builder.py` from any location outside the build directory `checkouts/` subdirectory. Run `./builder.py --version` to print the version number. Run `./builder.py --help` for a brief usage summary.
 
 ## Behaviour
 The script prints status messages to stdout as it progresses through each step.

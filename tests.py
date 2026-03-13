@@ -503,6 +503,18 @@ def test_build_dir_outside_git_repo():
     assert rc == 0
 
 
+def test_version_flag():
+    """--version prints version number and exits 0."""
+    result = subprocess.run(
+        [str(BUILD_PY), "--version"],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "1.0.0" in result.stdout + result.stderr
+
+
 def test_config_section_builder_vars():
     """Test 13: BUILDER_* set in config section (no env vars) → successful build."""
     tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))

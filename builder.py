@@ -3,6 +3,7 @@
 # requires-python = "==3.12.*"
 # ///
 
+import argparse
 import os
 import subprocess
 import sys
@@ -10,6 +11,8 @@ from functools import partial
 from pathlib import Path
 
 print = partial(print, flush=True)
+
+VERSION = "1.0.0"
 
 # ==============================================================
 # Configuration — fill in the values below to set up your build
@@ -45,6 +48,13 @@ BUILD_SCRIPT = os.environ.get("BUILDER_SCRIPT", "")
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Clones (or updates) a git repo and runs its build script. "
+                    "Configure the required variables in the configuration section near the top of this file."
+    )
+    parser.add_argument("--version", action="version", version=VERSION)
+    parser.parse_args()
+
     cwd = Path.cwd()
     missing = [
         name
