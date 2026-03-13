@@ -5,6 +5,7 @@
 # ///
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -68,6 +69,21 @@ def make_repo(
     return bare
 
 
+def make_outer_git_repo(tmp: Path, gitignore: str | None = None) -> Path:
+    """Create a git working tree at tmp/outer, optionally with a .gitignore."""
+    outer = tmp / "outer"
+    outer.mkdir()
+    _git(outer, "init")
+    _git(outer, "config", "user.email", "test@test.com")
+    _git(outer, "config", "user.name", "Test")
+    (outer / "README.md").write_text("test\n")
+    if gitignore is not None:
+        (outer / ".gitignore").write_text(gitignore)
+    _git(outer, "add", ".")
+    _git(outer, "commit", "-m", "init")
+    return outer
+
+
 def run_build(cwd: str | Path | None = None, **env_overrides) -> tuple[int, str, str]:
     """Run builder.py as a subprocess; return (returncode, stdout, stderr)."""
     env = os.environ.copy()
@@ -78,6 +94,39 @@ def run_build(cwd: str | Path | None = None, **env_overrides) -> tuple[int, str,
         capture_output=True,
         text=True,
         cwd=str(cwd) if cwd is not None else None,
+    )
+    return result.returncode, result.stdout, result.stderr
+
+
+def make_configured_builder(
+    tmp: Path,
+    builder_config: dict[str, str],
+    script_vars: dict[str, str] | None = None,
+) -> Path:
+    """Return a copy of builder.py with the config section filled in."""
+    source = BUILD_PY.read_text()
+    for key, value in builder_config.items():
+        source = re.sub(rf'({re.escape(key)}\s*=\s*)""', rf'\1"{value}"', source, count=1)
+    if script_vars:
+        entries = "\n".join(f'    "{k}": "{v}",' for k, v in script_vars.items())
+        source = source.replace(
+            'BUILD_SCRIPT_VARS = {\n    # "MY_VAR": "value",\n}',
+            f"BUILD_SCRIPT_VARS = {{\n{entries}\n}}",
+        )
+    configured = tmp / "builder_configured.py"
+    configured.write_text(source)
+    configured.chmod(0o755)
+    return configured
+
+
+def run_configured_builder(script: Path) -> tuple[int, str, str]:
+    """Run a configured builder script with no BUILDER_* env vars set."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("BUILDER_")}
+    result = subprocess.run(
+        [str(script)],
+        env=env,
+        capture_output=True,
+        text=True,
     )
     return result.returncode, result.stdout, result.stderr
 
@@ -401,6 +450,118 @@ def test_status_messages():
     assert "Cloning" in out
     assert "Running" in out
     assert "Build complete" in out
+
+
+def test_build_dir_in_git_repo_not_gitignored():
+    """BUILD_DIR inside a git repo with no .gitignore entry → exit non-zero with error."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    outer = make_outer_git_repo(tmp)
+    build = outer / "build"
+
+    rc, _, err = run_build(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+
+    assert rc != 0
+    assert err
+
+
+def test_build_dir_in_git_repo_gitignored():
+    """BUILD_DIR inside a git repo and covered by .gitignore → build proceeds."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    outer = make_outer_git_repo(tmp, gitignore="build/\n")
+    build = outer / "build"
+
+    rc, _, _ = run_build(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+
+    assert rc == 0
+
+
+def test_build_dir_outside_git_repo():
+    """BUILD_DIR outside any git repo → build proceeds normally."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    build = Path(tempfile.mkdtemp())  # system tmp — outside any git repo
+
+    rc, _, _ = run_build(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+
+    assert rc == 0
+
+
+def test_config_section_builder_vars():
+    """Test 13: BUILDER_* set in config section (no env vars) → successful build."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    build = tmp / "build"
+    build.mkdir()
+
+    script = make_configured_builder(tmp, {
+        "BUILDER_REPO": str(bare),
+        "BUILDER_BRANCH": "main",
+        "BUILDER_BUILD_DIR": str(build),
+        "BUILDER_SCRIPT": DEFAULT_SCRIPT,
+    })
+    rc, _, _ = run_configured_builder(script)
+
+    assert rc == 0
+    assert (build / "built").exists()
+
+
+def test_config_section_script_vars():
+    """Test 14: BUILD_SCRIPT_VARS entries are present in the build script's environment."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    build_sh = '#!/bin/sh\necho "$MY_VAR" > "$1/my_var.txt"\nexit 0\n'
+    bare = make_repo(tmp, build_sh=build_sh)
+    build = tmp / "build"
+    build.mkdir()
+
+    script = make_configured_builder(
+        tmp,
+        {
+            "BUILDER_REPO": str(bare),
+            "BUILDER_BRANCH": "main",
+            "BUILDER_BUILD_DIR": str(build),
+            "BUILDER_SCRIPT": DEFAULT_SCRIPT,
+        },
+        script_vars={"MY_VAR": "hello"},
+    )
+    rc, _, _ = run_configured_builder(script)
+
+    assert rc == 0
+    assert (build / "my_var.txt").read_text().strip() == "hello"
+
+
+def test_config_section_env_var_fallback():
+    """Test 15: empty config section → BUILDER_* env vars from shell are used."""
+    tmp = Path(tempfile.mkdtemp(dir=TARGET_TEST))
+    bare = make_repo(tmp)
+    build = tmp / "build"
+    build.mkdir()
+
+    rc, _, _ = run_build(
+        BUILDER_REPO=str(bare),
+        BUILDER_BRANCH="main",
+        BUILDER_BUILD_DIR=str(build),
+        BUILDER_SCRIPT=DEFAULT_SCRIPT,
+    )
+
+    assert rc == 0
+    assert (build / "built").exists()
 
 
 @pytest.mark.skip(

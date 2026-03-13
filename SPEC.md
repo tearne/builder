@@ -6,12 +6,18 @@ This project contains a single template script for building software from a git 
 Ensure `uv` is installed - it will manage the Python installation within a virtual environment.
 
 ## Configuration
-Set the required configuration via environment variables:
+`builder.py` contains a clearly marked configuration section near the top of the file. Set values there using plain string assignments — no Python knowledge is required. The configuration section is the intended customisation point; the rest of the script is not expected to be edited.
+
+Required variables:
 
 - **BUILDER_REPO** — repository URL accepted by `git` (assumed to be either public, or for git user credentials to already be set up on the server). The checkout directory name (repo name derived from the URL) follows `git clone` conventions (e.g. `https://github.com/org/myapp.git` → `myapp`).
 - **BUILDER_BRANCH** — branch to be built.
 - **BUILDER_BUILD_DIR** — build directory; artifacts are placed here and checkouts go in the `checkouts/` subdirectory. The directory is created if needed.
 - **BUILDER_SCRIPT** — filename of the script to execute within the checked-out repository.
+
+The configuration section also includes a `BUILD_SCRIPT_VARS` dictionary for any variables required by the build script; all entries are loaded into the environment before the build script runs.
+
+Values set in the configuration section take precedence over any same-named environment variables already present in the shell. Leaving a value empty falls back to the corresponding shell environment variable.
 
 ## Execution
 Run `./builder.py` from any location outside the build directory `checkouts/` subdirectory.
@@ -35,6 +41,7 @@ For each of the following conditions the script exits non-zero and prints a desc
 - Script is run from within the build directory `checkouts/` subdirectory
 - Script is run directly instead of via `uv`
 - Required configuration env vars are missing
+- Build directory is inside a git repository but not covered by `.gitignore` (the message includes the exact line to add and the path to the `.gitignore` file)
 - Build directory is not empty and has no `checkouts/` subdirectory
 - Checkout has uncommitted changes
 - Checkout repo or branch are not as expected, or cannot be fast-forwarded to match origin

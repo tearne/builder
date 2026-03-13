@@ -11,7 +11,33 @@ from pathlib import Path
 
 print = partial(print, flush=True)
 
-# --- Configuration — Set BUILDER_* env vars ---
+# ==============================================================
+# Configuration — fill in the values below to set up your build
+# ==============================================================
+
+BUILDER_REPO      = ""  # e.g. "https://github.com/org/myapp.git"
+BUILDER_BRANCH    = ""  # e.g. "main"
+BUILDER_BUILD_DIR = ""  # e.g. "/opt/build"
+BUILDER_SCRIPT    = ""  # e.g. "build.sh"
+
+# Variables required by your build script (add as many as needed):
+BUILD_SCRIPT_VARS = {
+    # "MY_VAR": "value",
+}
+
+# ==============================================================
+
+for _k, _v in {
+    "BUILDER_REPO": BUILDER_REPO,
+    "BUILDER_BRANCH": BUILDER_BRANCH,
+    "BUILDER_BUILD_DIR": BUILDER_BUILD_DIR,
+    "BUILDER_SCRIPT": BUILDER_SCRIPT,
+}.items():
+    if _v:
+        os.environ[_k] = _v
+for _k, _v in BUILD_SCRIPT_VARS.items():
+    os.environ[_k] = _v
+
 REPO = os.environ.get("BUILDER_REPO", "")
 BRANCH = os.environ.get("BUILDER_BRANCH", "")
 BUILD_DIR = os.environ.get("BUILDER_BUILD_DIR", "")
@@ -39,6 +65,8 @@ def main():
     build_dir = Path(os.path.abspath(BUILD_DIR))
     checkout = build_dir / "checkouts" / repo_name(REPO)
     checkouts_dir = build_dir / "checkouts"
+
+    _check_gitignore(build_dir)
 
     if build_dir.exists():
         is_empty = not any(build_dir.iterdir())
@@ -85,6 +113,45 @@ def main():
         sys.exit(6)
 
     print("Build complete.")
+
+
+def _check_gitignore(build_dir: Path) -> None:
+    anchor = build_dir
+    while not anchor.exists() and anchor != anchor.parent:
+        anchor = anchor.parent
+
+    in_repo = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=anchor,
+        capture_output=True,
+    )
+    if in_repo.returncode != 0:
+        return
+
+    repo_root = Path(
+        subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=anchor,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+
+    ignored = subprocess.run(
+        ["git", "check-ignore", "-q", str(build_dir.relative_to(repo_root)) + "/"],
+        cwd=repo_root,
+        capture_output=True,
+    )
+    if ignored.returncode != 0:
+        gitignore_entry = str(build_dir.relative_to(repo_root)) + "/"
+        print(
+            f"Error: {build_dir} is inside a git repository but is not covered by .gitignore.\n"
+            "Build artifacts and checkouts must not be accidentally committed.\n"
+            f"Add the following line to {repo_root / '.gitignore'} before proceeding:\n"
+            f"  {gitignore_entry}",
+            file=sys.stderr,
+        )
+        sys.exit(8)
 
 
 def _clone(checkout: Path) -> None:

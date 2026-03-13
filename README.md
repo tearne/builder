@@ -1,24 +1,30 @@
 # Builder
 
-A single-file Python script that clones (or updates) a git repo and runs its build script. It's a lightweight alternative to GitHub self-hosted runners for cases where builds don't need to be fully automated.
+A single-file Python script that clones a git repo and runs its build script. It's a lightweight alternative to GitHub self-hosted runners for cases where builds don't need to be fully automated.
 
 ## How It Works
 
 1. Clones `REPO` at `BRANCH` into `BUILD_DIR/checkouts/<repo-name>/`, or fast-forwards an existing checkout.
 2. Runs `BUILD_DIR/checkouts/<repo-name>/BUILD_SCRIPT` with `BUILD_DIR` as its only argument.
 
-The build script receives `BUILD_DIR` as its only argument and is responsible for placing artifacts there.
+The build script receives `BUILD_DIR` as its only argument and is responsible for placing any artifacts it wishes to save there.
 
 ## Setup
 
-Requires [`uv`](https://docs.astral.sh/uv/). Set the four configuration variables at the top of `builder.py`, or pass them as environment variables:
+Requires [`uv`](https://docs.astral.sh/uv/).
 
-| Variable | Env override | Description |
-|----------|-------------|-------------|
-| `REPO` | `BUILDER_REPO` | Full git URL of the repo to build |
-| `BRANCH` | `BUILDER_BRANCH` | Branch to check out |
-| `BUILD_DIR` | `BUILDER_BUILD_DIR` | Directory where artifacts are placed; checkouts go in `BUILD_DIR/checkouts/` (must exist) |
-| `BUILD_SCRIPT` | `BUILDER_SCRIPT` | Build script filename inside the repo (default: `build.sh`) |
+Fill in the configuration section near the top of `builder.py`:
+
+| Variable | Description |
+|----------|-------------|
+| `BUILDER_REPO` | Full git URL of the repo to build |
+| `BUILDER_BRANCH` | Branch to check out |
+| `BUILDER_BUILD_DIR` | Directory where artifacts are placed; checkouts go in `BUILD_DIR/checkouts/` |
+| `BUILDER_SCRIPT` | Build script filename inside the repo |
+
+Add any variables your build script needs to the `BUILD_SCRIPT_VARS` dictionary in the same section.
+
+If `BUILDER_BUILD_DIR` is inside a git repository, it must be covered by that repository's `.gitignore` to prevent build artifacts and checkouts from being accidentally committed. The script will tell you exactly what line to add if this check fails.
 
 Then run:
 
